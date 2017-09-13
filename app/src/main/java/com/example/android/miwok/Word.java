@@ -7,19 +7,22 @@ import android.graphics.drawable.Drawable;
  */
 
 public class Word {
-    String mMiwokTranslation;
-    String mDefaultTranslation;
-    int mImageResourceId=-1;
+    private String mMiwokTranslation;
+    private String mDefaultTranslation;
+    private int mImageResourceId=-1;
+    private int mAudioResourceId;
 
-    public Word(String defaultTranslation, String miwokTranslation){
+    public Word(String defaultTranslation, String miwokTranslation, int audioResourceId){
         mMiwokTranslation=miwokTranslation;
         mDefaultTranslation=defaultTranslation;
+        mAudioResourceId=audioResourceId;
     }
 
-    public Word(String defaultTranslation, String miwokTranslation, int imageResourceId){
+    public Word(String defaultTranslation, String miwokTranslation, int imageResourceId, int audioResourceId){
         mMiwokTranslation=miwokTranslation;
         mDefaultTranslation=defaultTranslation;
         mImageResourceId=imageResourceId;
+        mAudioResourceId=audioResourceId;
     }
 
     public String getMiwokTranslation(){
@@ -31,4 +34,6 @@ public class Word {
     }
 
     public int getImageResourceId(){ return mImageResourceId; }
+
+    public int getAudioResourceId(){ return mAudioResourceId; }
 }
