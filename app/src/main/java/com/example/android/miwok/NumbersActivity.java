@@ -1,8 +1,10 @@
 package com.example.android.miwok;
 
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
@@ -17,10 +19,39 @@ import java.util.ArrayList;
 
 public class NumbersActivity extends AppCompatActivity {
 
+    private MediaPlayer mMediaPlayer;
+    private AudioManager am;
+    AudioManager.OnAudioFocusChangeListener audioFocusChangeListener=new AudioManager.OnAudioFocusChangeListener() {
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            switch (focusChange){
+                case AudioManager.AUDIOFOCUS_GAIN:
+                    mMediaPlayer.start();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS:
+                    releaseMediaPlayerResources();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                    mMediaPlayer.pause();
+                    mMediaPlayer.seekTo(0);
+                    break;
+            }
+        }
+    };
+    MediaPlayer.OnCompletionListener onCompletionListener=new MediaPlayer.OnCompletionListener() {
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+            releaseMediaPlayerResources();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.word_list);
+
+        am =(AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         ArrayList<Word> words=new ArrayList<Word>();
         words.add(new Word("one", "lutti", R.drawable.number_one, R.raw.number_one));
@@ -60,9 +91,29 @@ public class NumbersActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Word currentWord= (Word) parent.getItemAtPosition(position);
                 int audioResourceId=currentWord.getAudioResourceId();
-                MediaPlayer mediaPlayer=MediaPlayer.create(NumbersActivity.this, audioResourceId);
-                mediaPlayer.start();
+                releaseMediaPlayerResources();
+                int result=am.requestAudioFocus(audioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+
+                if(result==AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
+                    mMediaPlayer=MediaPlayer.create(NumbersActivity.this, audioResourceId);
+                    mMediaPlayer.start();
+                    mMediaPlayer.setOnCompletionListener(onCompletionListener);
+                }
             }
         });
+    }
+
+    public void releaseMediaPlayerResources(){
+        if(mMediaPlayer!=null){
+            mMediaPlayer.release();
+            mMediaPlayer=null;
+            am.abandonAudioFocus(audioFocusChangeListener);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        releaseMediaPlayerResources();
     }
 }
